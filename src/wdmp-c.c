@@ -58,6 +58,8 @@ void wdmp_parse_generic_request(char * payload, PAYLOAD_TYPE payload_type, req_s
         return;
     }
 
+    WdmpInfo("Obtained Raw Payload is %s\n", payload);
+ 
     request = cJSON_Parse(payload);
     if (request != NULL)
     {
@@ -158,7 +160,7 @@ void wdmp_form_response(res_struct *resObj, char **payload)
         if(resObj != NULL)
 	{
 	        response = cJSON_CreateObject();
-	        WdmpPrint("resObj->reqType: %d\n",resObj->reqType);
+	        WdmpInfo("resObj->reqType: %d\n",resObj->reqType);
 	        
                 switch( resObj->reqType ) 
                 {
@@ -219,7 +221,7 @@ void wdmp_form_response(res_struct *resObj, char **payload)
         if(response != NULL)
 	{
                 *payload = cJSON_PrintUnformatted(response);
-                WdmpPrint("Response Payload :%s\n", *payload);
+                WdmpInfo("Response Payload :%s\n", *payload);
 		cJSON_Delete(response);
 	}
 
