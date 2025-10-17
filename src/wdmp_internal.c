@@ -424,7 +424,22 @@ void wdmp_form_get_response(res_struct *resObj, cJSON *response)
                                                 WdmpPrint("resObj->u.getRes->params[%zu][%zu].name :%s\n",i,j,resObj->u.getRes->params[i][j].name);
                                                 cJSON_AddStringToObject(valueObj, "name", resObj->u.getRes->params[i][j].name);
 	                                        WdmpPrint("resObj->u.getRes->params[%zu][%zu].value :%s\n",i,j,resObj->u.getRes->params[i][j].value);
-	                                        cJSON_AddStringToObject(valueObj, "value",resObj->u.getRes->params[i][j].value);
+	                                        
+												cJSON *jsonArray = NULL;
+												if(resObj->u.getRes->params[i][0].value != NULL)
+													jsonArray = cJSON_Parse(resObj->u.getRes->params[i][j].value);
+												if(jsonArray && cJSON_IsArray(jsonArray))
+												{
+													// jsonArray successfully and it's an array
+													cJSON_AddItemToObject(valueObj, "value", jsonArray);
+												}
+												else
+												{
+													if(jsonArray)
+														cJSON_Delete(jsonArray);  // prevent memory leak
+													cJSON_AddStringToObject(valueObj, "value",resObj->u.getRes->params[i][j].value);
+												}
+
 	                                        WdmpPrint("resObj->u.getRes->params[%zu][%zu].type :%d\n",i,j,resObj->u.getRes->params[i][j].type);
 	                                        cJSON_AddNumberToObject(valueObj, "dataType",resObj->u.getRes->params[i][j].type);
                                         }
@@ -438,7 +453,22 @@ void wdmp_form_get_response(res_struct *resObj, cJSON *response)
 	                                WdmpPrint("resObj->u.getRes->params[%zu][0].name :%s\n",i,resObj->u.getRes->params[i][0].name);
                                         cJSON_AddStringToObject(resParamObj, "name", resObj->u.getRes->params[i][0].name);
 	                                WdmpPrint("resObj->u.getRes->params[%zu][0].value :%s\n",i,resObj->u.getRes->params[i][0].value);
-	                                cJSON_AddStringToObject(resParamObj, "value",resObj->u.getRes->params[i][0].value);
+	                                
+									cJSON *jsonArray = NULL;
+									if(resObj->u.getRes->params[i][0].value != NULL)
+										jsonArray = cJSON_Parse(resObj->u.getRes->params[i][0].value);
+									if(jsonArray && cJSON_IsArray(jsonArray))
+									{
+										// jsonArray successfully and it's an array
+										cJSON_AddItemToObject(resParamObj, "value", jsonArray);
+									}
+									else
+									{
+										if(jsonArray)
+											cJSON_Delete(jsonArray);  // prevent memory leak										
+										cJSON_AddStringToObject(resParamObj, "value",resObj->u.getRes->params[i][0].value);
+									}
+
 	                                WdmpPrint("resObj->u.getRes->params[%zu][0].type :%d\n",i,resObj->u.getRes->params[i][0].type);
 	                                cJSON_AddNumberToObject(resParamObj, "dataType",resObj->u.getRes->params[i][0].type);
 	                                cJSON_AddNumberToObject(resParamObj, "parameterCount", resObj->u.getRes->retParamCnt[i]);
