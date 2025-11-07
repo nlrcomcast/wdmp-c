@@ -83,7 +83,16 @@ typedef enum
     WDMP_ERR_ATOMIC_GET_SET_FAILED,
     WDMP_ERR_METHOD_NOT_SUPPORTED,
     WDMP_ERR_SESSION_IN_PROGRESS,
-    WDMP_ERR_MAX_REQUEST
+    WDMP_ERR_MAX_REQUEST,
+    WDMP_ERR_NOTIF_FIELD_COUNT,
+    WDMP_ERR_NOTIF_NAME_FIELD,
+    WDMP_ERR_NOTIF_NAME_MISSING,
+    WDMP_ERR_NOTIF_TYPE_FIELD,
+    WDMP_ERR_NOTIF_TYPE_MISSING,
+    WDMP_ERR_NOTIF_TYPE_INVALID,
+    WDMP_ERR_NOTIF_ON_FAILED,
+    WDMP_ERR_MULTI_STATUS,
+    WDMP_ERR_BOOTUP_IN_PROGRESS
 } WDMP_STATUS;
 
 typedef struct
@@ -102,7 +111,8 @@ typedef enum
     TEST_AND_SET,
     REPLACE_ROWS,
     ADD_ROWS,
-    DELETE_ROW
+    DELETE_ROW,
+    METHOD
 } REQ_TYPE;
 
 typedef struct
@@ -141,6 +151,19 @@ typedef struct
     size_t rowCnt;
 } table_req_t;
 
+typedef struct
+{
+    param_t *params;
+    size_t paramCnt;
+} method_param_t;
+
+typedef struct
+{	
+    char *methodName;
+    method_param_t *objects;
+    size_t objectCnt;
+} method_req_t;
+
 typedef struct {
     REQ_TYPE reqType;
     union {
@@ -148,6 +171,7 @@ typedef struct {
         set_req_t *setReq;
         table_req_t *tableReq;
         test_set_req_t *testSetReq;
+        method_req_t *methodReq;
     } u;
 } req_struct;
 

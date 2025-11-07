@@ -389,6 +389,89 @@ void parse_delete_row_request(cJSON *request, req_struct **reqObj)
 	(*reqObj)->u.tableReq->objectName = strdup(cJSON_GetObjectItem(request,"row")->valuestring);
 }
 
+DATA_TYPE param_type(cJSON *item)
+{
+    if (cJSON_IsString(item))
+        return WDMP_STRING;
+    if (cJSON_IsNumber(item))
+        return WDMP_INT;
+    if (cJSON_IsBool(item))
+        return WDMP_BOOLEAN;
+    return WDMP_NONE;
+}
+
+void parse_method_request(cJSON *request, req_struct **reqObj)
+{
+	WdmpInfo("parsing Method Request\n");
+    if (!request || !reqObj)
+	{
+        return;
+	}
+	(*reqObj)->reqType = METHOD;
+	WdmpInfo("(*reqObj)->reqType : %d\n",(*reqObj)->reqType);
+    cJSON *method = cJSON_GetObjectItem(request, "method");
+    cJSON *params_array = cJSON_GetObjectItem(request, "parameters");
+
+    if (!cJSON_IsString(method) || !cJSON_IsArray(params_array))
+    {
+        WdmpError("parse_method_request: Invalid request\n");
+        return;
+    }
+
+    /* Allocate req_struct */
+
+
+    (*reqObj)->u.methodReq = (method_req_t *)calloc(1, sizeof(method_req_t));
+
+    (*reqObj)->u.methodReq->methodName = strdup(method->valuestring);
+
+    /* Count number of objects in "parameters" array */
+    size_t objCount = cJSON_GetArraySize(params_array);
+    (*reqObj)->u.methodReq->objectCnt = objCount;
+    (*reqObj)->u.methodReq->objects = (method_param_t *)calloc(objCount, sizeof(method_param_t));
+    WdmpInfo("Parsed METHOD request: %s with %zu objects\n", (*reqObj)->u.methodReq->methodName, (*reqObj)->u.methodReq->objectCnt);
+    for (size_t i = 0; i < objCount; i++)
+    {
+        cJSON *param_obj = cJSON_GetArrayItem(params_array, i);
+        if (!cJSON_IsObject(param_obj))
+            continue;
+
+        /* Count fields in this object */
+        size_t ParamCount = 0;
+        cJSON *child = NULL;
+        cJSON_ArrayForEach(child, param_obj)
+        {
+            ParamCount++;
+        }
+
+        (*reqObj)->u.methodReq->objects[i].paramCnt = ParamCount;
+        (*reqObj)->u.methodReq->objects[i].params = (param_t *)calloc(ParamCount, sizeof(param_t));
+		WdmpInfo("paramCnt %zu \n", (*reqObj)->u.methodReq->objects[i].paramCnt);
+        size_t j = 0;
+        cJSON_ArrayForEach(child, param_obj)
+        {
+            (*reqObj)->u.methodReq->objects[i].params[j].name = strdup(child->string);
+
+            if (cJSON_IsString(child))
+                (*reqObj)->u.methodReq->objects[i].params[j].value = strdup(child->valuestring);
+            else if (cJSON_IsNumber(child))
+            {
+                char buf[64];
+                snprintf(buf, sizeof(buf), "%d", child->valueint);
+                (*reqObj)->u.methodReq->objects[i].params[j].value = strdup(buf);
+            }
+            else if (cJSON_IsBool(child))
+                (*reqObj)->u.methodReq->objects[i].params[j].value = strdup(cJSON_IsTrue(child) ? "true" : "false");
+            else
+                (*reqObj)->u.methodReq->objects[i].params[j].value = strdup("");
+
+            (*reqObj)->u.methodReq->objects[i].params[j].type = param_type(child);
+			WdmpInfo("%s %s %d\n", (*reqObj)->u.methodReq->objects[i].params[j].name,(*reqObj)->u.methodReq->objects[i].params[j].value,(*reqObj)->u.methodReq->objects[i].params[j].type);
+			j++;
+        }
+    }
+}
+
 void wdmp_form_get_response(res_struct *resObj, cJSON *response)
 {
         cJSON *parameters = NULL,*resParamObj = NULL, *value = NULL, *valueObj = NULL;
@@ -639,6 +722,66 @@ void wdmp_form_table_response(res_struct *resObj, cJSON *response)
         cJSON_AddNumberToObject(response, "statusCode", statusCode);
 }
 
+void wdmp_form_method_response(res_struct *resObj, cJSON *response)
+{
+        cJSON *sucess_parameters = NULL, *failure_parameters = NULL, *resParamObj = NULL;
+        size_t i, paramCount;
+        char *result = NULL;
+		bool sucess = false, fail = false;
+        WDMP_RESPONSE_STATUS_CODE statusCode = WDMP_STATUS_GENERAL_FALURE;
+
+        WdmpInfo("resObj->paramCnt : %zu\n",resObj->paramCnt);
+        paramCount = resObj->paramCnt;
+        getStatusCode(&statusCode, paramCount, resObj->retStatus);
+		result = (char *) malloc(sizeof(char) * MAX_RESULT_LEN);
+		if(paramCount == 1 || statusCode == WDMP_STATUS_SUCCESS || statusCode == NOTIFY_SUBSCRIPTION_INVALID_INPUT)
+		{
+			mapWdmpStatusToStatusMessage(resObj->retStatus[0], result);
+			cJSON_AddStringToObject(response, "message", result);
+		}
+		else
+		{
+			sucess_parameters =cJSON_CreateArray();
+			failure_parameters =cJSON_CreateArray();
+					for (i = 0; i < paramCount; i++)
+					{
+						if(resObj->retStatus[i] == WDMP_SUCCESS)
+						{
+							cJSON_AddItemToArray(sucess_parameters, cJSON_CreateString(resObj->u.paramRes->params[i].name));
+							sucess = true;
+						}
+						else
+						{
+							cJSON_AddItemToArray(failure_parameters, resParamObj = cJSON_CreateObject());
+
+							WdmpInfo("resObj->u.paramRes->params[%zu].name :%s\n",i,resObj->u.paramRes->params[i].name);
+							cJSON_AddStringToObject(resParamObj, "name", resObj->u.paramRes->params[i].name);
+
+							WdmpInfo("resObj->retStatus[%zu] : %d\n",i,resObj->retStatus[i]);
+							mapWdmpStatusToStatusMessage(resObj->retStatus[i], result);
+							cJSON_AddStringToObject(resParamObj, "reason", result);
+							fail =true;
+						}
+					}
+			if(sucess == true && fail == true)
+			{
+				resObj->retStatus[0] = WDMP_ERR_MULTI_STATUS;
+				statusCode = 207;
+			}
+			mapWdmpStatusToStatusMessage(resObj->retStatus[0], result);
+			cJSON_AddStringToObject(response, "message", result);
+			cJSON_AddItemToObject(response, "success", sucess_parameters);
+			cJSON_AddItemToObject(response, "failure",failure_parameters );
+		}
+
+		if(result)
+		{
+					free(result);
+		}
+        WdmpInfo("statusCode : %d\n",statusCode);
+        cJSON_AddNumberToObject(response, "statusCode", statusCode);
+}
+
  void wdmp_form_test_and_set_response(res_struct *resObj, cJSON *response)
 {
         cJSON *parameters = NULL,*resParamObj1 = NULL, *resParamObj2 = NULL;
@@ -833,7 +976,43 @@ void wdmp_form_table_response(res_struct *resObj, cJSON *response)
 	{
 		strcpy(result,"Max SET request limit reached");
 	}
-	else 
+	else if (status == WDMP_ERR_NOTIF_FIELD_COUNT)
+	{
+		strcpy(result,"Insufficient parameters");
+	}
+	else if (status == WDMP_ERR_NOTIF_NAME_FIELD)
+	{
+		strcpy(result,"Missing name field in method request");
+	}
+	else if (status == WDMP_ERR_NOTIF_NAME_MISSING)
+	{
+		strcpy(result,"Missing param name field in method request");
+	}		
+	else if (status == WDMP_ERR_NOTIF_TYPE_FIELD)
+	{
+		strcpy(result,"Missing notificationType field in method request");
+	}
+	else if (status == WDMP_ERR_NOTIF_TYPE_MISSING)
+	{
+		strcpy(result,"Missing param notificationType field in method request");
+	}	
+	else if (status == WDMP_ERR_NOTIF_TYPE_INVALID)
+	{
+		strcpy(result,"Notification type is not supported");
+	}
+	else if (status == WDMP_ERR_NOTIF_ON_FAILED)
+	{
+		strcpy(result,"Failed to turn notification ON");
+	}	
+	else if (status == WDMP_ERR_MULTI_STATUS)
+	{
+		strcpy(result,"Partial success");
+	}
+	else if (status == WDMP_ERR_BOOTUP_IN_PROGRESS)
+	{
+		strcpy(result,"Notification setup during Bootup is in Progress, rejecting method request");
+	}	
+	else
 	{
 		strcpy(result,"Unknown Error");
 	}
@@ -844,7 +1023,7 @@ void wdmp_form_table_response(res_struct *resObj, cJSON *response)
 	int i =0;
 	for (i = 0; i < paramCount; i++) 
 	{
-		WdmpPrint("ret[%d] = %d\n",i,ret[i]);
+		WdmpInfo("ret[%d] = %d\n",i,ret[i]);
 		if (ret[i] == WDMP_SUCCESS) 
 		{
 			*statusCode = WDMP_STATUS_SUCCESS;
@@ -874,13 +1053,28 @@ void wdmp_form_table_response(res_struct *resObj, cJSON *response)
 			*statusCode = WDMP_STATUS_PREVIOUS_REQUEST_INPROGRESS;
 			break;
 		}
+		else if (ret[i] == WDMP_ERR_BOOTUP_IN_PROGRESS)
+		{
+			*statusCode = NOTIFY_SUBSCRIPTION_BOOTUP_IN_PROGRESS;
+			break;
+		}		
+		else if (ret[i] == WDMP_ERR_NOTIF_FIELD_COUNT || ret[i] == WDMP_ERR_NOTIF_NAME_FIELD || ret[i] == WDMP_ERR_NOTIF_NAME_MISSING || ret[i] == WDMP_ERR_NOTIF_TYPE_FIELD || ret[i] == WDMP_ERR_NOTIF_TYPE_MISSING || ret[i] == WDMP_ERR_NOTIF_TYPE_INVALID)
+		{
+			*statusCode = NOTIFY_SUBSCRIPTION_INVALID_INPUT ;
+			break;
+		}
+		else if (ret[i] == WDMP_ERR_NOTIF_ON_FAILED)
+		{
+			*statusCode = NOTIFY_SUBSCRIPTION_FAILURE;
+			break;
+		}
 		else 
 		{
 			*statusCode = WDMP_STATUS_GENERAL_FALURE;
 			break;
 		}
 	}
-	WdmpPrint("*statusCode = %d\n",*statusCode);
+	WdmpInfo("*statusCode = %d\n",*statusCode);
 }
 /*----------------------------------------------------------------------------*/
 /*                             Internal functions                             */

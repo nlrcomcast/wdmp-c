@@ -30,6 +30,9 @@ typedef enum
 	WDMP_STATUS_SUCCESS = 200,
 	WDMP_ADDROW_STATUS_SUCCESS = 201,
 	WDMP_STATUS_PREVIOUS_REQUEST_INPROGRESS = 202,
+	NOTIFY_SUBSCRIPTION_INVALID_INPUT = 400,
+	NOTIFY_SUBSCRIPTION_FAILURE = 500,
+	NOTIFY_SUBSCRIPTION_BOOTUP_IN_PROGRESS = 503,
 	WDMP_STATUS_GENERAL_FALURE =  520,
 	WDMP_STATUS_CID_TEST_FAILED = 550,
 	WDMP_STATUS_CMC_TEST_FAILED = 551,
@@ -73,6 +76,7 @@ typedef enum
 /*----------------------------------------------------------------------------*/
 void parse_get_request(cJSON *request, req_struct **reqObj, PAYLOAD_TYPE type);
 void parse_set_request(cJSON *request, req_struct **reqObj, PAYLOAD_TYPE type);
+void parse_method_request(cJSON *request, req_struct **reqObj);
 void parse_set_attr_request(cJSON *request, req_struct **reqObj);
 void parse_test_and_set_request(cJSON *request, req_struct **reqObj);
 void parse_replace_rows_request(cJSON *request, req_struct **reqObj);
@@ -84,8 +88,10 @@ void wdmp_form_get_attr_response(res_struct *resObj, cJSON *response);
 void wdmp_form_set_response(res_struct *resObj, cJSON *response);
 void wdmp_form_test_and_set_response(res_struct *resObj, cJSON *response);
 void wdmp_form_table_response(res_struct *resObj, cJSON *response);
+void wdmp_form_method_response(res_struct *resObj, cJSON *response);
 
 void getStatusCode(WDMP_RESPONSE_STATUS_CODE *statusCode, int paramCount, WDMP_STATUS * ret);
+DATA_TYPE infer_type(cJSON *item);
 
 /*----------------------------------------------------------------------------*/
 /*                             External Functions                             */
