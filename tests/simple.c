@@ -2703,7 +2703,7 @@ void test_parse_method_request_url()
     CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq->objects[0].params);
     CU_ASSERT_EQUAL(reqObj->u.methodReq->objects[0].paramCnt, 1);
     CU_ASSERT_STRING_EQUAL("URL",reqObj->u.methodReq->objects[0].params[0].name);
-    CU_ASSERT_STRING_EQUAL("http://10.0.0.212/packages/cujo_agent.tar",reqObj->u.methodReq->objects[0].params[0].value);
+    CU_ASSERT_STRING_EQUAL("http://10.0.0.212/packages/cujo_agent.tar",reqObj->u.methodReq->objects[0].params[0].value.s);
     wdmp_free_req_struct(reqObj);
 }
 
@@ -2755,17 +2755,17 @@ void test_parse_method_request_startConnectivityCheck()
     CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq->objects[0].params);
     CU_ASSERT_EQUAL(reqObj->u.methodReq->objects[0].paramCnt, 6);
         CU_ASSERT_STRING_EQUAL("linux_interface_name",reqObj->u.methodReq->objects[0].params[0].name);
-        CU_ASSERT_STRING_EQUAL("erouter0",reqObj->u.methodReq->objects[0].params[0].value);
+        CU_ASSERT_STRING_EQUAL("erouter0",reqObj->u.methodReq->objects[0].params[0].value.s);
         CU_ASSERT_STRING_EQUAL("alias",reqObj->u.methodReq->objects[0].params[1].name);
-        CU_ASSERT_STRING_EQUAL("DOCSIS",reqObj->u.methodReq->objects[0].params[1].value);
+        CU_ASSERT_STRING_EQUAL("DOCSIS",reqObj->u.methodReq->objects[0].params[1].value.s);
         CU_ASSERT_STRING_EQUAL("IPv4_DNS_Servers",reqObj->u.methodReq->objects[0].params[2].name);
-        CU_ASSERT_STRING_EQUAL("55.55.55.75,75.75.76.76",reqObj->u.methodReq->objects[0].params[2].value);
+        CU_ASSERT_STRING_EQUAL("55.55.55.75,75.75.76.76",reqObj->u.methodReq->objects[0].params[2].value.s);
         CU_ASSERT_STRING_EQUAL("IPv6_DNS_Servers",reqObj->u.methodReq->objects[0].params[3].name);
-        CU_ASSERT_STRING_EQUAL("ffff:558:aaaa::1,2001:558:feed::2",reqObj->u.methodReq->objects[0].params[3].value);
+        CU_ASSERT_STRING_EQUAL("ffff:558:aaaa::1,2001:558:feed::2",reqObj->u.methodReq->objects[0].params[3].value.s);
         CU_ASSERT_STRING_EQUAL("IPv4_Gateway",reqObj->u.methodReq->objects[0].params[4].name);
-        CU_ASSERT_STRING_EQUAL("11.22.33.44",reqObj->u.methodReq->objects[0].params[4].value);
+        CU_ASSERT_STRING_EQUAL("11.22.33.44",reqObj->u.methodReq->objects[0].params[4].value.s);
         CU_ASSERT_STRING_EQUAL("IPv6_Gateway",reqObj->u.methodReq->objects[0].params[5].name);
-        CU_ASSERT_STRING_EQUAL("fe80::21c:73ff:fe00:99",reqObj->u.methodReq->objects[0].params[5].value);
+        CU_ASSERT_STRING_EQUAL("fe80::21c:73ff:fe00:99",reqObj->u.methodReq->objects[0].params[5].value.s);
 
     wdmp_free_req_struct(reqObj);
 }
@@ -2793,15 +2793,15 @@ void test_parse_method_request_Dynamic_params()
         CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq->objects[0].params);
         CU_ASSERT_EQUAL(reqObj->u.methodReq->objects[0].paramCnt, 2);
         CU_ASSERT_STRING_EQUAL("name",reqObj->u.methodReq->objects[0].params[0].name);
-        CU_ASSERT_STRING_EQUAL("Test.WiFi.SSID.1.SSID",reqObj->u.methodReq->objects[0].params[0].value);
+        CU_ASSERT_STRING_EQUAL("Test.WiFi.SSID.1.SSID",reqObj->u.methodReq->objects[0].params[0].value.s);
         CU_ASSERT_STRING_EQUAL("notificationType",reqObj->u.methodReq->objects[0].params[1].name);
-        CU_ASSERT_STRING_EQUAL("ValueChange",reqObj->u.methodReq->objects[0].params[1].value);
+        CU_ASSERT_STRING_EQUAL("ValueChange",reqObj->u.methodReq->objects[0].params[1].value.s);
         CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq->objects[1].params);
         CU_ASSERT_EQUAL(reqObj->u.methodReq->objects[1].paramCnt, 2);
         CU_ASSERT_STRING_EQUAL("name",reqObj->u.methodReq->objects[1].params[0].name);
-        CU_ASSERT_STRING_EQUAL("Test.WiFi.SSID.2.SSID",reqObj->u.methodReq->objects[1].params[0].value);
+        CU_ASSERT_STRING_EQUAL("Test.WiFi.SSID.2.SSID",reqObj->u.methodReq->objects[1].params[0].value.s);
         CU_ASSERT_STRING_EQUAL("notificationType",reqObj->u.methodReq->objects[1].params[1].name);
-        CU_ASSERT_STRING_EQUAL("ValueChange",reqObj->u.methodReq->objects[1].params[1].value);
+        CU_ASSERT_STRING_EQUAL("ValueChange",reqObj->u.methodReq->objects[1].params[1].value.s);
         
 
     wdmp_free_req_struct(reqObj);
@@ -2830,17 +2830,17 @@ void test_parse_method_request_multiple_Params()
         CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq->objects[0].params);
         CU_ASSERT_EQUAL(reqObj->u.methodReq->objects[0].paramCnt, 2);
         CU_ASSERT_STRING_EQUAL("name",reqObj->u.methodReq->objects[0].params[0].name);
-        CU_ASSERT_STRING_EQUAL("Test.WiFi.SSID.1.SSID",reqObj->u.methodReq->objects[0].params[0].value);
+        CU_ASSERT_STRING_EQUAL("Test.WiFi.SSID.1.SSID",reqObj->u.methodReq->objects[0].params[0].value.s);
         CU_ASSERT_STRING_EQUAL("notificationType",reqObj->u.methodReq->objects[0].params[1].name);
-        CU_ASSERT_STRING_EQUAL("ValueChange",reqObj->u.methodReq->objects[0].params[1].value);
+        CU_ASSERT_STRING_EQUAL("ValueChange",reqObj->u.methodReq->objects[0].params[1].value.s);
         CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq->objects[1].params);
         CU_ASSERT_EQUAL(reqObj->u.methodReq->objects[1].paramCnt, 3);
         CU_ASSERT_STRING_EQUAL("name",reqObj->u.methodReq->objects[1].params[0].name);
-        CU_ASSERT_STRING_EQUAL("Test.WiFi.SSID.2.SSID",reqObj->u.methodReq->objects[1].params[0].value);
+        CU_ASSERT_STRING_EQUAL("Test.WiFi.SSID.2.SSID",reqObj->u.methodReq->objects[1].params[0].value.s);
         CU_ASSERT_STRING_EQUAL("notificationType",reqObj->u.methodReq->objects[1].params[1].name);
-        CU_ASSERT_STRING_EQUAL("ValueChange",reqObj->u.methodReq->objects[1].params[1].value);
+        CU_ASSERT_STRING_EQUAL("ValueChange",reqObj->u.methodReq->objects[1].params[1].value.s);
         CU_ASSERT_STRING_EQUAL("Timeout",reqObj->u.methodReq->objects[1].params[2].name);
-        CU_ASSERT_STRING_EQUAL("ON",reqObj->u.methodReq->objects[1].params[2].value);
+        CU_ASSERT_STRING_EQUAL("ON",reqObj->u.methodReq->objects[1].params[2].value.s);
 
     wdmp_free_req_struct(reqObj);
 }

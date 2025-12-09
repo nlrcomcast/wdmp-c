@@ -349,7 +349,8 @@ void wdmp_free_req_struct( req_struct *reqObj )
                         for (size_t j = 0; j < reqObj->u.methodReq->objects[i].paramCnt; j++)
                         {
                             free(reqObj->u.methodReq->objects[i].params[j].name);
-                            free(reqObj->u.methodReq->objects[i].params[j].value);
+                            if(reqObj->u.methodReq->objects[i].params[j].type == WDMP_STRING)
+                                free(reqObj->u.methodReq->objects[i].params[j].value.s);
                         }
                         free(reqObj->u.methodReq->objects[i].params);
                     }

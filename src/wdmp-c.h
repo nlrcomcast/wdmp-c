@@ -151,17 +151,36 @@ typedef struct
     size_t rowCnt;
 } table_req_t;
 
+// Generic key-value pair for method requests
 typedef struct
 {
-    param_t *params;
-    size_t paramCnt;
+    char *name;      // Key name, e.g., "IPv4_Gateway"
+    DATA_TYPE type;  // Type of the value: string, uint, bool
+    union {
+        char *s;
+        unsigned int ui;
+        bool b;
+    } value;
+} kv_pair_t;
+
+// This structure represents each array object in a method request JSON.
+// Example JSON object:
+// {
+//     "name": "Device.WiFi.SSID.1.SSID",
+//     "notificationType": "ValueChange"
+// }
+// Would map to a `method_param_t` with two kv_pair_t entries.
+typedef struct
+{
+    kv_pair_t *params;  // Array of key-value pairs in each parameter
+    size_t paramCnt;    // Number of key-value pairs in each parameter
 } method_param_t;
 
 typedef struct
 {	
-    char *methodName;
-    method_param_t *objects;
-    size_t objectCnt;
+    char *methodName;       // Name of the method
+    method_param_t *objects;// Array of parameter objects in "parameters"
+    size_t objectCnt;       // Number of parameter objects
 } method_req_t;
 
 typedef struct {
