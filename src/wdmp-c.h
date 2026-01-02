@@ -20,7 +20,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-
+#define WDMP_FREE(__x__) if(__x__ != NULL) { free((void*)(__x__)); __x__ = NULL;} else {printf("Trying to free null pointer\n");}
 typedef enum
 {
     WDMP_STRING = 0,
@@ -92,7 +92,8 @@ typedef enum
     WDMP_ERR_NOTIF_TYPE_INVALID,
     WDMP_ERR_NOTIF_ON_FAILED,
     WDMP_ERR_MULTI_STATUS,
-    WDMP_ERR_BOOTUP_IN_PROGRESS
+    WDMP_ERR_BOOTUP_IN_PROGRESS,
+    WDMP_INVALID_METHOD
 } WDMP_STATUS;
 
 typedef struct
@@ -229,11 +230,18 @@ typedef struct
 
 typedef struct
 {
+    char *message;
+    WDMP_STATUS statusCode;
+}method_res_t;
+
+typedef struct
+{
     REQ_TYPE reqType;
     union {
         get_res_t *getRes;
         param_res_t *paramRes;	
         table_res_t *tableRes;
+        method_res_t *methodRes;
     } u;
     money_trace_spans *timeSpan;
     WDMP_STATUS *retStatus;

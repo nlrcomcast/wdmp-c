@@ -343,21 +343,23 @@ void wdmp_free_req_struct( req_struct *reqObj )
 
                 if (reqObj->u.methodReq->methodName)  
                 {
-                    free(reqObj->u.methodReq->methodName);
+                    WDMP_FREE(reqObj->u.methodReq->methodName);
                     for (size_t i = 0; i < reqObj->u.methodReq->objectCnt; i++)
                     {
                         for (size_t j = 0; j < reqObj->u.methodReq->objects[i].paramCnt; j++)
                         {
-                            free(reqObj->u.methodReq->objects[i].params[j].name);
+                            WDMP_FREE(reqObj->u.methodReq->objects[i].params[j].name);
                             if(reqObj->u.methodReq->objects[i].params[j].type == WDMP_STRING)
-                                free(reqObj->u.methodReq->objects[i].params[j].value.s);
+                            {
+                                WDMP_FREE(reqObj->u.methodReq->objects[i].params[j].value.s);
+                            }
                         }
-                        free(reqObj->u.methodReq->objects[i].params);
+                        WDMP_FREE(reqObj->u.methodReq->objects[i].params);
                     }
 
-                    free(reqObj->u.methodReq->objects);
+                    WDMP_FREE(reqObj->u.methodReq->objects);
                 }
-                free(reqObj->u.methodReq);
+                WDMP_FREE(reqObj->u.methodReq);
         }
         break;
 
@@ -456,22 +458,11 @@ void wdmp_free_res_struct( res_struct *resObj )
                 break;
                 case METHOD:
                 {
-                        if(resObj->u.paramRes)
+                        if (resObj->u.methodRes)
                         {
-                                if(resObj->u.paramRes->params)
-                                {
-                                        for (i = 0; i < resObj->paramCnt; i++)
-                                        { 
-                                                free(resObj->u.paramRes->params[i].name);
-                                                if(resObj->u.paramRes->params[i].value)
-                                                {
-                                                	free(resObj->u.paramRes->params[i].value);
-                                                }
-                                        }
-                                        free(resObj->u.paramRes->params);
-                                }
-                                free(resObj->u.paramRes);
-                        }
+                            WDMP_FREE(resObj->u.methodRes->message)
+                            WDMP_FREE(resObj->u.methodRes);
+                        }                        
                 }
                 break;
         }

@@ -2373,112 +2373,43 @@ void test_1method_res_sucess_type()
         res_struct *resObj = NULL;
         char *payload = NULL;
         cJSON *response = NULL;
-        
-        WdmpInfo("\n***************************************************** \n\n");
-        
         resObj = (res_struct *) malloc(sizeof(res_struct));
         memset(resObj, 0, sizeof(res_struct));
-        
         resObj->reqType = METHOD;
-        resObj->paramCnt = 1;
-        resObj->retStatus = calloc(resObj->paramCnt, sizeof(WDMP_STATUS));
-        resObj->u.paramRes = calloc(1, sizeof(param_res_t));
-        resObj->u.paramRes->params = calloc(resObj->paramCnt, sizeof(param_t));
-        resObj->retStatus[0] = WDMP_SUCCESS;
+        resObj->u.methodRes = calloc(1, sizeof(method_res_t));
+        resObj->u.methodRes->message = strdup("Success");
+        resObj->u.methodRes->statusCode = WDMP_SUCCESS;
         wdmp_form_response(resObj, &payload);
-
         CU_ASSERT( NULL != payload);
-        
         WdmpInfo("payload :%s\n",payload);
-
         response = cJSON_Parse(payload);
-        verify_failure_response(response,resObj);
-        if(NULL != resObj)
-        {
-                wdmp_free_res_struct(resObj);
-        }
-        
-        if(response != NULL)
-        {
-                cJSON_Delete(response);
-        }
-        free(payload);        
+        CU_ASSERT_EQUAL((int)200, cJSON_GetObjectItem(response, "statusCode")->valueint);
+        CU_ASSERT_STRING_EQUAL("Success", cJSON_GetObjectItem(response, "message")->valuestring);
+        wdmp_free_res_struct(resObj);
+        cJSON_Delete(response);
+        WDMP_FREE(payload);
 }
 
-void test_1method_res_notsupport_type()
+void test_1method_res_on_failed()
 {
         res_struct *resObj = NULL;
         char *payload = NULL;
         cJSON *response = NULL;
-        
-        WdmpInfo("\n***************************************************** \n\n");
-        
         resObj = (res_struct *) malloc(sizeof(res_struct));
         memset(resObj, 0, sizeof(res_struct));
-        
         resObj->reqType = METHOD;
-        resObj->paramCnt = 1;
-        resObj->retStatus = calloc(resObj->paramCnt, sizeof(WDMP_STATUS));
-        resObj->u.paramRes = calloc(1, sizeof(param_res_t));
-        resObj->u.paramRes->params = calloc(resObj->paramCnt, sizeof(param_t));
-        resObj->retStatus[0] = WDMP_ERR_UNSUPPORTED_NAMESPACE;
+        resObj->u.methodRes = calloc(1, sizeof(method_res_t));
+        resObj->u.methodRes->message = strdup("Failed to turn notification ON");
+        resObj->u.methodRes->statusCode = WDMP_ERR_NOTIF_ON_FAILED;
         wdmp_form_response(resObj, &payload);
-
         CU_ASSERT( NULL != payload);
-        
         WdmpInfo("payload :%s\n",payload);
-
         response = cJSON_Parse(payload);
-        verify_failure_response(response,resObj);
-        if(NULL != resObj)
-        {
-                wdmp_free_res_struct(resObj);
-        }
-        
-        if(response != NULL)
-        {
-                cJSON_Delete(response);
-        }
-        free(payload);        
-}
-void test_2method_res_sucess_type()
-{
-        res_struct *resObj = NULL;
-        char *payload = NULL;
-        cJSON *response = NULL;
-        
-        WdmpInfo("\n***************************************************** \n\n");
-        
-        resObj = (res_struct *) malloc(sizeof(res_struct));
-        memset(resObj, 0, sizeof(res_struct));
-        
-        resObj->reqType = METHOD;
-        resObj->paramCnt = 2;
-        resObj->retStatus = calloc(resObj->paramCnt, sizeof(WDMP_STATUS));
-        resObj->u.paramRes = calloc(1, sizeof(param_res_t));
-        resObj->u.paramRes->params = calloc(resObj->paramCnt, sizeof(param_t));
-        resObj->retStatus[0] = WDMP_SUCCESS;
-        resObj->retStatus[1] = WDMP_SUCCESS;
-        resObj->u.paramRes->params[0].name = strdup("Device.WiFi.SSID.1.SSID");
-        resObj->u.paramRes->params[1].name = strdup("Device.WiFi.SSID.1.SSID");
-        wdmp_form_response(resObj, &payload);
-
-        CU_ASSERT( NULL != payload);
-        
-        WdmpInfo("payload :%s\n",payload);
-
-        response = cJSON_Parse(payload);
-        //verify_failure_response(response,resObj);
-        if(NULL != resObj)
-        {
-                wdmp_free_res_struct(resObj);
-        }
-        
-        if(response != NULL)
-        {
-                cJSON_Delete(response);
-        }
-        free(payload);        
+        CU_ASSERT_EQUAL((int)NOTIFY_SUBSCRIPTION_FAILURE, cJSON_GetObjectItem(response, "statusCode")->valueint);
+        CU_ASSERT_STRING_EQUAL("Failed to turn notification ON", cJSON_GetObjectItem(response, "message")->valuestring);
+        wdmp_free_res_struct(resObj);
+        cJSON_Delete(response);
+        WDMP_FREE(payload);
 }
 
 void test_2method_res_sucess_fail_type()
@@ -2486,39 +2417,54 @@ void test_2method_res_sucess_fail_type()
         res_struct *resObj = NULL;
         char *payload = NULL;
         cJSON *response = NULL;
-        
-        WdmpInfo("\n***************************************************** \n\n");
-        
         resObj = (res_struct *) malloc(sizeof(res_struct));
         memset(resObj, 0, sizeof(res_struct));
-        
         resObj->reqType = METHOD;
-        resObj->paramCnt = 2;
-        resObj->retStatus = calloc(resObj->paramCnt, sizeof(WDMP_STATUS));
-        resObj->u.paramRes = calloc(1, sizeof(param_res_t));
-        resObj->u.paramRes->params = calloc(resObj->paramCnt, sizeof(param_t));
-        resObj->retStatus[0] = WDMP_SUCCESS;
-        resObj->retStatus[1] = WDMP_ERR_NOTIF_ON_FAILED;
-        resObj->u.paramRes->params[0].name = strdup("Device.WiFi.SSID.1.SSID");
-        resObj->u.paramRes->params[1].name = strdup("Device.WiFi.XYZ.1.XYZ");
+        resObj->u.methodRes = calloc(1, sizeof(method_res_t));
+        resObj->u.methodRes->message = strdup("{\"message\":\"Partial success\",\"success\":[\"Test.WiFi.SSID.1.SSID\"],\"failure\":[{\"name\":\"ABC\",\"reason\":\"Failed to turn notification ON\"}]}");
+        resObj->u.methodRes->statusCode = WDMP_ERR_MULTI_STATUS;
         wdmp_form_response(resObj, &payload);
-
         CU_ASSERT( NULL != payload);
-        
         WdmpInfo("payload :%s\n",payload);
-
         response = cJSON_Parse(payload);
-        //verify_failure_response(response,resObj);
-        if(NULL != resObj)
-        {
-                wdmp_free_res_struct(resObj);
-        }
-        
-        if(response != NULL)
-        {
-                cJSON_Delete(response);
-        }
-        free(payload);        
+        CU_ASSERT_PTR_NOT_NULL_FATAL(response);
+
+        /* statusCode */
+        CU_ASSERT_EQUAL((int)WDMP_MULTI_NOTIFY_STATUS, cJSON_GetObjectItem(response, "statusCode")->valueint);
+        /* message */
+        CU_ASSERT_STRING_EQUAL("Partial success", cJSON_GetObjectItem(response, "message")->valuestring);
+
+        /* success array */
+        cJSON *success = cJSON_GetObjectItem(response, "success");
+        CU_ASSERT_TRUE(cJSON_IsArray(success));
+        CU_ASSERT_EQUAL(1, cJSON_GetArraySize(success));
+        CU_ASSERT_STRING_EQUAL("Test.WiFi.SSID.1.SSID", cJSON_GetArrayItem(success, 0)->valuestring);
+
+        /* failure array */
+        cJSON *failure = cJSON_GetObjectItem(response, "failure");
+        CU_ASSERT_TRUE(cJSON_IsArray(failure));
+        CU_ASSERT_EQUAL(1, cJSON_GetArraySize(failure));
+
+        /* failure[0] object */
+        cJSON *failureObj = cJSON_GetArrayItem(failure, 0);
+        CU_ASSERT_PTR_NOT_NULL(failureObj);
+        CU_ASSERT_TRUE(cJSON_IsObject(failureObj));
+
+        /* name */
+        cJSON *name = cJSON_GetObjectItem(failureObj, "name");
+        CU_ASSERT_PTR_NOT_NULL(name);
+        CU_ASSERT_TRUE(cJSON_IsString(name));
+        CU_ASSERT_STRING_EQUAL("ABC", name->valuestring);
+
+        /* reason */
+        cJSON *reason = cJSON_GetObjectItem(failureObj, "reason");
+        CU_ASSERT_PTR_NOT_NULL(reason);
+        CU_ASSERT_TRUE(cJSON_IsString(reason));
+        CU_ASSERT_STRING_EQUAL("Failed to turn notification ON", reason->valuestring);
+
+        wdmp_free_res_struct(resObj);
+        cJSON_Delete(response);
+        WDMP_FREE(payload);  
 }
 void test_unknown_req_type()
 {
@@ -2680,6 +2626,93 @@ void test_large_parameter_table_request()
     }
 }
 
+void test_parse_method_req_invalid_method_key()
+{
+    const char *json = "{ \"method1\" : \"Test.SoftwareModules.InstallDU()\" ,\"parameters\" : [{\"URL\" : \"http://10.0.0.212/packages/cujo_agent.tar\"}]}";
+    cJSON *request = cJSON_Parse(json);
+    req_struct *reqObj = NULL;
+
+    if (request != NULL)
+    {
+        (reqObj) = (req_struct *)calloc(1, sizeof(req_struct));
+        CU_ASSERT_PTR_NOT_NULL_FATAL(reqObj);
+
+        parse_method_request(request, &reqObj);
+        cJSON_Delete(request);
+    }
+    CU_ASSERT_PTR_NOT_NULL(reqObj);
+    CU_ASSERT_EQUAL(reqObj->reqType, METHOD);
+    CU_ASSERT_PTR_NULL(reqObj->u.methodReq);
+    wdmp_free_req_struct(reqObj);
+}
+
+void test_parse_method_req_empty_method_name()
+{
+    const char *json = "{ \"method\" : \"\" ,\"parameters\" : [{\"URL\" : \"http://10.0.0.212/packages/cujo_agent.tar\"}]}";
+    cJSON *request = cJSON_Parse(json);
+    req_struct *reqObj = NULL;
+
+    if (request != NULL)
+    {
+        (reqObj) = (req_struct *)calloc(1, sizeof(req_struct));
+        CU_ASSERT_PTR_NOT_NULL_FATAL(reqObj);
+
+        parse_method_request(request, &reqObj);
+        cJSON_Delete(request);
+    }
+    CU_ASSERT_PTR_NOT_NULL(reqObj);
+    CU_ASSERT_EQUAL(reqObj->reqType, METHOD);
+    CU_ASSERT_STRING_EQUAL( "", reqObj->u.methodReq->methodName);
+    CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq);
+    CU_ASSERT_EQUAL(reqObj->u.methodReq->objectCnt, 1);
+
+    CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq->objects[0].params);
+    CU_ASSERT_EQUAL(reqObj->u.methodReq->objects[0].paramCnt, 1);
+    CU_ASSERT_STRING_EQUAL("URL",reqObj->u.methodReq->objects[0].params[0].name);
+    CU_ASSERT_STRING_EQUAL("http://10.0.0.212/packages/cujo_agent.tar",reqObj->u.methodReq->objects[0].params[0].value.s);
+    wdmp_free_req_struct(reqObj);
+}
+
+void test_parse_method_req_invalid_parameters_key()
+{
+    const char *json = "{ \"method\" : \"Test.SoftwareModules.InstallDU()\" ,\"parameters1\" : [{\"URL\" : \"http://10.0.0.212/packages/cujo_agent.tar\"}]}";
+    cJSON *request = cJSON_Parse(json);
+    req_struct *reqObj = NULL;
+
+    if (request != NULL)
+    {
+        (reqObj) = (req_struct *)calloc(1, sizeof(req_struct));
+        CU_ASSERT_PTR_NOT_NULL_FATAL(reqObj);
+
+        parse_method_request(request, &reqObj);
+        cJSON_Delete(request);
+    }
+    CU_ASSERT_PTR_NOT_NULL(reqObj);
+    CU_ASSERT_EQUAL(reqObj->reqType, METHOD);
+    CU_ASSERT_STRING_EQUAL( "Test.SoftwareModules.InstallDU()", reqObj->u.methodReq->methodName);
+    CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq);
+    CU_ASSERT_EQUAL(reqObj->u.methodReq->objectCnt, 0);
+    CU_ASSERT_PTR_NULL(reqObj->u.methodReq->objects);
+    wdmp_free_req_struct(reqObj);
+}
+
+void test_parse_method_req_invalid_payload_data()
+{
+    const char *json = "{ \"method\" : \"Test.SoftwareModules.InstallDU()\" ,\"parameters\" : asdfgh}";
+    cJSON *request = cJSON_Parse(json);
+    req_struct *reqObj = NULL;
+
+
+    (reqObj) = (req_struct *)calloc(1, sizeof(req_struct));
+    CU_ASSERT_PTR_NOT_NULL_FATAL(reqObj);
+    parse_method_request(request, &reqObj);
+
+    CU_ASSERT_PTR_NOT_NULL(reqObj);
+    CU_ASSERT_EQUAL(reqObj->reqType, METHOD);
+    CU_ASSERT_PTR_NULL(reqObj->u.methodReq);
+    wdmp_free_req_struct(reqObj);
+}
+
 void test_parse_method_request_url()
 {
     const char *json = "{ \"method\" : \"Test.SoftwareModules.InstallDU()\" ,\"parameters\" : [{\"URL\" : \"http://10.0.0.212/packages/cujo_agent.tar\"}]}";
@@ -2754,18 +2787,18 @@ void test_parse_method_request_startConnectivityCheck()
 
     CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq->objects[0].params);
     CU_ASSERT_EQUAL(reqObj->u.methodReq->objects[0].paramCnt, 6);
-        CU_ASSERT_STRING_EQUAL("linux_interface_name",reqObj->u.methodReq->objects[0].params[0].name);
-        CU_ASSERT_STRING_EQUAL("erouter0",reqObj->u.methodReq->objects[0].params[0].value.s);
-        CU_ASSERT_STRING_EQUAL("alias",reqObj->u.methodReq->objects[0].params[1].name);
-        CU_ASSERT_STRING_EQUAL("DOCSIS",reqObj->u.methodReq->objects[0].params[1].value.s);
-        CU_ASSERT_STRING_EQUAL("IPv4_DNS_Servers",reqObj->u.methodReq->objects[0].params[2].name);
-        CU_ASSERT_STRING_EQUAL("55.55.55.75,75.75.76.76",reqObj->u.methodReq->objects[0].params[2].value.s);
-        CU_ASSERT_STRING_EQUAL("IPv6_DNS_Servers",reqObj->u.methodReq->objects[0].params[3].name);
-        CU_ASSERT_STRING_EQUAL("ffff:558:aaaa::1,2001:558:feed::2",reqObj->u.methodReq->objects[0].params[3].value.s);
-        CU_ASSERT_STRING_EQUAL("IPv4_Gateway",reqObj->u.methodReq->objects[0].params[4].name);
-        CU_ASSERT_STRING_EQUAL("11.22.33.44",reqObj->u.methodReq->objects[0].params[4].value.s);
-        CU_ASSERT_STRING_EQUAL("IPv6_Gateway",reqObj->u.methodReq->objects[0].params[5].name);
-        CU_ASSERT_STRING_EQUAL("fe80::21c:73ff:fe00:99",reqObj->u.methodReq->objects[0].params[5].value.s);
+    CU_ASSERT_STRING_EQUAL("linux_interface_name",reqObj->u.methodReq->objects[0].params[0].name);
+    CU_ASSERT_STRING_EQUAL("erouter0",reqObj->u.methodReq->objects[0].params[0].value.s);
+    CU_ASSERT_STRING_EQUAL("alias",reqObj->u.methodReq->objects[0].params[1].name);
+    CU_ASSERT_STRING_EQUAL("DOCSIS",reqObj->u.methodReq->objects[0].params[1].value.s);
+    CU_ASSERT_STRING_EQUAL("IPv4_DNS_Servers",reqObj->u.methodReq->objects[0].params[2].name);
+    CU_ASSERT_STRING_EQUAL("55.55.55.75,75.75.76.76",reqObj->u.methodReq->objects[0].params[2].value.s);
+    CU_ASSERT_STRING_EQUAL("IPv6_DNS_Servers",reqObj->u.methodReq->objects[0].params[3].name);
+    CU_ASSERT_STRING_EQUAL("ffff:558:aaaa::1,2001:558:feed::2",reqObj->u.methodReq->objects[0].params[3].value.s);
+    CU_ASSERT_STRING_EQUAL("IPv4_Gateway",reqObj->u.methodReq->objects[0].params[4].name);
+    CU_ASSERT_STRING_EQUAL("11.22.33.44",reqObj->u.methodReq->objects[0].params[4].value.s);
+    CU_ASSERT_STRING_EQUAL("IPv6_Gateway",reqObj->u.methodReq->objects[0].params[5].name);
+    CU_ASSERT_STRING_EQUAL("fe80::21c:73ff:fe00:99",reqObj->u.methodReq->objects[0].params[5].value.s);
 
     wdmp_free_req_struct(reqObj);
 }
@@ -2790,19 +2823,18 @@ void test_parse_method_request_Dynamic_params()
     CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq);
     CU_ASSERT_EQUAL(reqObj->u.methodReq->objectCnt, 2);
 
-        CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq->objects[0].params);
-        CU_ASSERT_EQUAL(reqObj->u.methodReq->objects[0].paramCnt, 2);
-        CU_ASSERT_STRING_EQUAL("name",reqObj->u.methodReq->objects[0].params[0].name);
-        CU_ASSERT_STRING_EQUAL("Test.WiFi.SSID.1.SSID",reqObj->u.methodReq->objects[0].params[0].value.s);
-        CU_ASSERT_STRING_EQUAL("notificationType",reqObj->u.methodReq->objects[0].params[1].name);
-        CU_ASSERT_STRING_EQUAL("ValueChange",reqObj->u.methodReq->objects[0].params[1].value.s);
-        CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq->objects[1].params);
-        CU_ASSERT_EQUAL(reqObj->u.methodReq->objects[1].paramCnt, 2);
-        CU_ASSERT_STRING_EQUAL("name",reqObj->u.methodReq->objects[1].params[0].name);
-        CU_ASSERT_STRING_EQUAL("Test.WiFi.SSID.2.SSID",reqObj->u.methodReq->objects[1].params[0].value.s);
-        CU_ASSERT_STRING_EQUAL("notificationType",reqObj->u.methodReq->objects[1].params[1].name);
-        CU_ASSERT_STRING_EQUAL("ValueChange",reqObj->u.methodReq->objects[1].params[1].value.s);
-        
+    CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq->objects[0].params);
+    CU_ASSERT_EQUAL(reqObj->u.methodReq->objects[0].paramCnt, 2);
+    CU_ASSERT_STRING_EQUAL("name",reqObj->u.methodReq->objects[0].params[0].name);
+    CU_ASSERT_STRING_EQUAL("Test.WiFi.SSID.1.SSID",reqObj->u.methodReq->objects[0].params[0].value.s);
+    CU_ASSERT_STRING_EQUAL("notificationType",reqObj->u.methodReq->objects[0].params[1].name);
+    CU_ASSERT_STRING_EQUAL("ValueChange",reqObj->u.methodReq->objects[0].params[1].value.s);
+    CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq->objects[1].params);
+    CU_ASSERT_EQUAL(reqObj->u.methodReq->objects[1].paramCnt, 2);
+    CU_ASSERT_STRING_EQUAL("name",reqObj->u.methodReq->objects[1].params[0].name);
+    CU_ASSERT_STRING_EQUAL("Test.WiFi.SSID.2.SSID",reqObj->u.methodReq->objects[1].params[0].value.s);
+    CU_ASSERT_STRING_EQUAL("notificationType",reqObj->u.methodReq->objects[1].params[1].name);
+    CU_ASSERT_STRING_EQUAL("ValueChange",reqObj->u.methodReq->objects[1].params[1].value.s);
 
     wdmp_free_req_struct(reqObj);
 }
@@ -2827,20 +2859,21 @@ void test_parse_method_request_multiple_Params()
     CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq);
     CU_ASSERT_EQUAL(reqObj->u.methodReq->objectCnt, 2);
 
-        CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq->objects[0].params);
-        CU_ASSERT_EQUAL(reqObj->u.methodReq->objects[0].paramCnt, 2);
-        CU_ASSERT_STRING_EQUAL("name",reqObj->u.methodReq->objects[0].params[0].name);
-        CU_ASSERT_STRING_EQUAL("Test.WiFi.SSID.1.SSID",reqObj->u.methodReq->objects[0].params[0].value.s);
-        CU_ASSERT_STRING_EQUAL("notificationType",reqObj->u.methodReq->objects[0].params[1].name);
-        CU_ASSERT_STRING_EQUAL("ValueChange",reqObj->u.methodReq->objects[0].params[1].value.s);
-        CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq->objects[1].params);
-        CU_ASSERT_EQUAL(reqObj->u.methodReq->objects[1].paramCnt, 3);
-        CU_ASSERT_STRING_EQUAL("name",reqObj->u.methodReq->objects[1].params[0].name);
-        CU_ASSERT_STRING_EQUAL("Test.WiFi.SSID.2.SSID",reqObj->u.methodReq->objects[1].params[0].value.s);
-        CU_ASSERT_STRING_EQUAL("notificationType",reqObj->u.methodReq->objects[1].params[1].name);
-        CU_ASSERT_STRING_EQUAL("ValueChange",reqObj->u.methodReq->objects[1].params[1].value.s);
-        CU_ASSERT_STRING_EQUAL("Timeout",reqObj->u.methodReq->objects[1].params[2].name);
-        CU_ASSERT_STRING_EQUAL("ON",reqObj->u.methodReq->objects[1].params[2].value.s);
+    CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq->objects[0].params);
+    CU_ASSERT_EQUAL(reqObj->u.methodReq->objects[0].paramCnt, 2);
+    CU_ASSERT_STRING_EQUAL("name",reqObj->u.methodReq->objects[0].params[0].name);
+    CU_ASSERT_STRING_EQUAL("Test.WiFi.SSID.1.SSID",reqObj->u.methodReq->objects[0].params[0].value.s);
+    CU_ASSERT_STRING_EQUAL("notificationType",reqObj->u.methodReq->objects[0].params[1].name);
+    CU_ASSERT_STRING_EQUAL("ValueChange",reqObj->u.methodReq->objects[0].params[1].value.s);
+
+    CU_ASSERT_PTR_NOT_NULL(reqObj->u.methodReq->objects[1].params);
+    CU_ASSERT_EQUAL(reqObj->u.methodReq->objects[1].paramCnt, 3);
+    CU_ASSERT_STRING_EQUAL("name",reqObj->u.methodReq->objects[1].params[0].name);
+    CU_ASSERT_STRING_EQUAL("Test.WiFi.SSID.2.SSID",reqObj->u.methodReq->objects[1].params[0].value.s);
+    CU_ASSERT_STRING_EQUAL("notificationType",reqObj->u.methodReq->objects[1].params[1].name);
+    CU_ASSERT_STRING_EQUAL("ValueChange",reqObj->u.methodReq->objects[1].params[1].value.s);
+    CU_ASSERT_STRING_EQUAL("Timeout",reqObj->u.methodReq->objects[1].params[2].name);
+    CU_ASSERT_STRING_EQUAL("ON",reqObj->u.methodReq->objects[1].params[2].value.s);
 
     wdmp_free_req_struct(reqObj);
 }
@@ -2862,7 +2895,7 @@ void add_request_parse_suites( CU_pSuite *suite )
     CU_add_test( *suite, "Test Test and set Request Parse negative", test_and_set_req_parse_negative );   
     CU_add_test( *suite, "Test Replace row Request Parse", replace_rows_req_parse );
     CU_add_test( *suite, "Test Add row Request Parse", add_row_req_parse );
-    CU_add_test( *suite, "Test Delete row Request Parse", delete_row_req_parse ); 
+    CU_add_test( *suite, "Test Delete row Request Parse", delete_row_req_parse );
     CU_add_test( *suite, "Test One Object One Param method Request Parse", test_parse_method_request_url );
     CU_add_test( *suite, "Test Zero Objects method Request Parse", test_parse_method_request_zero_objects );
     CU_add_test( *suite, "Test One Object six Params method Request Parse", test_parse_method_request_startConnectivityCheck );
@@ -2885,41 +2918,45 @@ void add_request_parse_suites( CU_pSuite *suite )
     CU_add_test( *suite, "Test Get large parameter name Request", get_large_parameter_req_parse );
     CU_add_test( *suite, "Test Set large parameter name and value Request", set_large_parameter_req_parse );
     CU_add_test( *suite, "Test large parameter table Request", test_large_parameter_table_request );
+
+    CU_add_test( *suite, "Test method Request with invalid method key", test_parse_method_req_invalid_method_key );
+    CU_add_test( *suite, "Test method Request with empty method key", test_parse_method_req_empty_method_name );
+    CU_add_test( *suite, "Test method Request with invalid parameters key", test_parse_method_req_invalid_parameters_key );
+    CU_add_test( *suite, "Test method Request with invalid parameters data", test_parse_method_req_invalid_payload_data );
 }
 
 void add_response_form_suites ( CU_pSuite *suite )
 {
     *suite = CU_add_suite( "wdmp-c Response forming tests", NULL, NULL );
     
-    // CU_add_test( *suite, "Get Response Form", get_res_form );
-    // CU_add_test( *suite, "test wdmp form response negative", get_wildcard_res_form );
-    // CU_add_test( *suite, "Get wild card Response Form", test_wdmp_form_response_negative );
-    // CU_add_test( *suite, "Get attributes Response Form", get_attr_res_form );
-    // CU_add_test( *suite, "Set Response Form", set_res_form );
-    // CU_add_test( *suite, "Set attributes Response Form", set_attr_res_form );
-    // CU_add_test( *suite, "Test and Set Response Form", test_and_set_res_form );
-    // CU_add_test( *suite, "Add row Response Form", add_rows_res_form );
-    // CU_add_test( *suite, "Replace rows Response Form", replace_rows_res_form );
-    // CU_add_test( *suite, "Delete row Response Form", delete_row_res_form ); 
-    // CU_add_test( *suite, "Table response Form", table_res_form );  
-    // CU_add_test( *suite, "Get status code", test_get_status_code );
-    // CU_add_test( *suite, "Get status code session inprogress", test_get_status_code_inprogress );
-    // CU_add_test( *suite, "Map wdmp status", test_map_wdmp_status );   
-    // CU_add_test( *suite, "Negative Get Response Form", neg_get_res_form );
-    // CU_add_test( *suite, "Get Wildcard empty Response Form", get_wildcard_empty_value_res_form);
-    // CU_add_test( *suite, "Negative Get attributes Response Form", neg_get_attr_res_form );
-    // CU_add_test( *suite, "Negative Set Response Form", neg_set_res_form );   
-    // CU_add_test( *suite, "Negative Set attributes Response Form", neg_set_attr_res_form );  
-    // CU_add_test( *suite, "Negative test and set Response Form", neg_test_and_set_res_form);
-    // CU_add_test( *suite, "Test CMC ", test_cmc);  
-    // CU_add_test( *suite, "Test and set without CID Response Form", test_and_set_without_cid_res_form);  
-    // CU_add_test( *suite, "Negative Add row Response Form", neg_add_rows_res_form );
-    // CU_add_test( *suite, "Negative Replace rows Response Form", neg_replace_rows_res_form );
-    // CU_add_test( *suite, "Negative Delete row Response Form", neg_delete_row_res_form );
-    // CU_add_test( *suite, "Test unknown request type", test_unknown_req_type);
+    CU_add_test( *suite, "Get Response Form", get_res_form );
+    CU_add_test( *suite, "test wdmp form response negative", get_wildcard_res_form );
+    CU_add_test( *suite, "Get wild card Response Form", test_wdmp_form_response_negative );
+    CU_add_test( *suite, "Get attributes Response Form", get_attr_res_form );
+    CU_add_test( *suite, "Set Response Form", set_res_form );
+    CU_add_test( *suite, "Set attributes Response Form", set_attr_res_form );
+    CU_add_test( *suite, "Test and Set Response Form", test_and_set_res_form );
+    CU_add_test( *suite, "Add row Response Form", add_rows_res_form );
+    CU_add_test( *suite, "Replace rows Response Form", replace_rows_res_form );
+    CU_add_test( *suite, "Delete row Response Form", delete_row_res_form ); 
+    CU_add_test( *suite, "Table response Form", table_res_form );  
+    CU_add_test( *suite, "Get status code", test_get_status_code );
+    CU_add_test( *suite, "Get status code session inprogress", test_get_status_code_inprogress );
+    CU_add_test( *suite, "Map wdmp status", test_map_wdmp_status );   
+    CU_add_test( *suite, "Negative Get Response Form", neg_get_res_form );
+    CU_add_test( *suite, "Get Wildcard empty Response Form", get_wildcard_empty_value_res_form);
+    CU_add_test( *suite, "Negative Get attributes Response Form", neg_get_attr_res_form );
+    CU_add_test( *suite, "Negative Set Response Form", neg_set_res_form );   
+    CU_add_test( *suite, "Negative Set attributes Response Form", neg_set_attr_res_form );  
+    CU_add_test( *suite, "Negative test and set Response Form", neg_test_and_set_res_form);
+    CU_add_test( *suite, "Test CMC ", test_cmc);  
+    CU_add_test( *suite, "Test and set without CID Response Form", test_and_set_without_cid_res_form);  
+    CU_add_test( *suite, "Negative Add row Response Form", neg_add_rows_res_form );
+    CU_add_test( *suite, "Negative Replace rows Response Form", neg_replace_rows_res_form );
+    CU_add_test( *suite, "Negative Delete row Response Form", neg_delete_row_res_form );
+    CU_add_test( *suite, "Test unknown request type", test_unknown_req_type);
     CU_add_test( *suite, "Test one method sucess request type", test_1method_res_sucess_type);
-    CU_add_test( *suite, "Test one method not support request type", test_1method_res_notsupport_type);
-    CU_add_test( *suite, "Test two method sucess", test_2method_res_sucess_type);
+    CU_add_test( *suite, "Test method notification ON failed", test_1method_res_on_failed);
     CU_add_test( *suite, "Test one method sucess one method fail ", test_2method_res_sucess_fail_type); 
 }
 
@@ -2933,7 +2970,7 @@ int main( void )
 
     if( CUE_SUCCESS == CU_initialize_registry() ) 
     {
-        //add_request_parse_suites( &req_suite );
+        add_request_parse_suites( &req_suite );
         add_response_form_suites( &res_suite );
 
         if( NULL != req_suite ||  NULL != res_suite) 
