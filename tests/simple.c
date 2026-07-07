@@ -860,6 +860,174 @@ void set_req_value_field_empty ()
 		
 }
 
+void set_req_parse_with_rsp_destination ()
+{
+    WdmpInfo("\n***************************************************** \n\n");
+    
+    int paramCount;
+    req_struct *reqObj = NULL;
+      
+    char * request= "{\"parameters\":[{\"name\":\"RDK.Operate\",\"value\":\"eyJvcCI6InJlYm9vdCJ9\",\"dataType\":5}],\"rspDestination\":\"event:some-dest/thing\",\"command\":\"SET\"}";
+ 
+    wdmp_parse_request(request,&reqObj);
+    
+    CU_ASSERT( NULL != reqObj);
+    CU_ASSERT_EQUAL( SET, reqObj->reqType );
+    
+    WdmpInfo("Request Type : %d\n",reqObj->reqType);
+    paramCount = (int)reqObj->u.setReq->paramCnt;
+    WdmpPrint("param.name : %s\n",reqObj->u.setReq->param[0].name);
+    WdmpPrint("param.value : %s\n",reqObj->u.setReq->param[0].value);
+    WdmpPrint("param.type : %d\n",reqObj->u.setReq->param[0].type);
+    WdmpPrint("rspDestination : %s\n",reqObj->u.setReq->rspDestination);
+    
+    CU_ASSERT_EQUAL( 1, paramCount );
+    CU_ASSERT_STRING_EQUAL( "RDK.Operate", reqObj->u.setReq->param[0].name );
+    /* value is stored verbatim; never decoded or validated */
+    CU_ASSERT_STRING_EQUAL( "eyJvcCI6InJlYm9vdCJ9", reqObj->u.setReq->param[0].value );
+    CU_ASSERT_EQUAL( WDMP_BASE64, reqObj->u.setReq->param[0].type );
+    CU_ASSERT( NULL != reqObj->u.setReq->rspDestination );
+    CU_ASSERT_STRING_EQUAL( "event:some-dest/thing", reqObj->u.setReq->rspDestination );
+    
+    if (NULL != reqObj) {
+        wdmp_free_req_struct(reqObj );
+    }
+		
+}
+
+void set_req_parse_without_rsp_destination ()
+{
+    WdmpInfo("\n***************************************************** \n\n");
+    
+    int paramCount;
+    req_struct *reqObj = NULL;
+      
+    char * request= "{\"parameters\":[{\"name\":\"RDK.Operate\",\"value\":\"eyJvcCI6InJlYm9vdCJ9\",\"dataType\":5}],\"command\":\"SET\"}";
+ 
+    wdmp_parse_request(request,&reqObj);
+    
+    CU_ASSERT( NULL != reqObj);
+    CU_ASSERT_EQUAL( SET, reqObj->reqType );
+    
+    WdmpInfo("Request Type : %d\n",reqObj->reqType);
+    paramCount = (int)reqObj->u.setReq->paramCnt;
+    WdmpPrint("param.name : %s\n",reqObj->u.setReq->param[0].name);
+    
+    CU_ASSERT_EQUAL( 1, paramCount );
+    CU_ASSERT_STRING_EQUAL( "RDK.Operate", reqObj->u.setReq->param[0].name );
+    CU_ASSERT( NULL == reqObj->u.setReq->rspDestination );
+    
+    if (NULL != reqObj) {
+        wdmp_free_req_struct(reqObj );
+    }
+		
+}
+
+void set_res_form_with_rsp_destination()
+{
+        res_struct *resObj = NULL;
+        cJSON *response = NULL;
+        cJSON *paramArray = NULL, *resParamObj = NULL, *rspDest = NULL;
+        
+        WdmpInfo("\n***************************************************** \n\n");
+        
+        response = cJSON_CreateObject();
+        
+        resObj = (res_struct *) malloc(sizeof(res_struct));
+        memset(resObj, 0, sizeof(res_struct));
+        
+        resObj->reqType = SET;
+        resObj->paramCnt = 1;
+        
+        resObj->u.paramRes = (param_res_t *) malloc(sizeof(param_res_t));
+        memset(resObj->u.paramRes, 0, sizeof(param_res_t));
+        
+        resObj->u.paramRes->params = (param_t *) malloc(sizeof(param_t));
+        memset(resObj->u.paramRes->params, 0, sizeof(param_t));
+        
+        resObj->u.paramRes->params[0].name = (char *) malloc(sizeof(char) * MAX_PARAM_LEN);
+        strcpy(resObj->u.paramRes->params[0].name, "RDK.Operate");
+        
+        resObj->u.paramRes->rspDestination = strdup("event:some-dest/thing");
+        
+        resObj->timeSpan = NULL;
+        
+        resObj->retStatus = (WDMP_STATUS *) malloc(sizeof(WDMP_STATUS));
+        resObj->retStatus[0] = WDMP_SUCCESS;
+        
+        wdmp_form_set_response(resObj, response);
+        
+        CU_ASSERT( NULL != response);
+        
+        paramArray = cJSON_GetObjectItem(response, "parameters");
+        CU_ASSERT( NULL != paramArray );
+        resParamObj = cJSON_GetArrayItem(paramArray, 0);
+        rspDest = cJSON_GetObjectItem(resParamObj, "rspDestination");
+        CU_ASSERT( NULL != rspDest );
+        CU_ASSERT_STRING_EQUAL( "event:some-dest/thing", rspDest->valuestring );
+        
+        if(NULL != resObj)
+        {
+                wdmp_free_res_struct(resObj);
+        }
+        
+        if(response != NULL)
+	{
+		cJSON_Delete(response);
+	}
+}
+
+void set_res_form_without_rsp_destination()
+{
+        res_struct *resObj = NULL;
+        cJSON *response = NULL;
+        cJSON *paramArray = NULL, *resParamObj = NULL;
+        
+        WdmpInfo("\n***************************************************** \n\n");
+        
+        response = cJSON_CreateObject();
+        
+        resObj = (res_struct *) malloc(sizeof(res_struct));
+        memset(resObj, 0, sizeof(res_struct));
+        
+        resObj->reqType = SET;
+        resObj->paramCnt = 1;
+        
+        resObj->u.paramRes = (param_res_t *) malloc(sizeof(param_res_t));
+        memset(resObj->u.paramRes, 0, sizeof(param_res_t));
+        
+        resObj->u.paramRes->params = (param_t *) malloc(sizeof(param_t));
+        memset(resObj->u.paramRes->params, 0, sizeof(param_t));
+        
+        resObj->u.paramRes->params[0].name = (char *) malloc(sizeof(char) * MAX_PARAM_LEN);
+        strcpy(resObj->u.paramRes->params[0].name, "Device.DeviceInfo.Webpa.Enable");
+        
+        resObj->timeSpan = NULL;
+        
+        resObj->retStatus = (WDMP_STATUS *) malloc(sizeof(WDMP_STATUS));
+        resObj->retStatus[0] = WDMP_SUCCESS;
+        
+        wdmp_form_set_response(resObj, response);
+        
+        CU_ASSERT( NULL != response);
+        
+        paramArray = cJSON_GetObjectItem(response, "parameters");
+        CU_ASSERT( NULL != paramArray );
+        resParamObj = cJSON_GetArrayItem(paramArray, 0);
+        CU_ASSERT( NULL == cJSON_GetObjectItem(resParamObj, "rspDestination") );
+        
+        if(NULL != resObj)
+        {
+                wdmp_free_res_struct(resObj);
+        }
+        
+        if(response != NULL)
+	{
+		cJSON_Delete(response);
+	}
+}
+
+
 void verify_get_reponse(cJSON *response, res_struct *resObj)
 {
         cJSON *paramArray = NULL, *resParamObj = NULL, *value = NULL, *valueObj = NULL;
@@ -2559,6 +2727,8 @@ void add_request_parse_suites( CU_pSuite *suite )
     CU_add_test( *suite, "Test Empty Test and Set Request", empty_test_and_set );
     CU_add_test( *suite, "Test Set Req NULL Param value", set_req_null_param_value );
     CU_add_test( *suite, "Test Set Req empty value field", set_req_value_field_empty );
+    CU_add_test( *suite, "Test Set Req with rspDestination", set_req_parse_with_rsp_destination );
+    CU_add_test( *suite, "Test Set Req without rspDestination", set_req_parse_without_rsp_destination );
     CU_add_test( *suite, "Test Get large parameter name Request", get_large_parameter_req_parse );
     CU_add_test( *suite, "Test Set large parameter name and value Request", set_large_parameter_req_parse );
     CU_add_test( *suite, "Test large parameter table Request", test_large_parameter_table_request );
@@ -2573,6 +2743,8 @@ void add_response_form_suites ( CU_pSuite *suite )
     CU_add_test( *suite, "Get wild card Response Form", test_wdmp_form_response_negative );
     CU_add_test( *suite, "Get attributes Response Form", get_attr_res_form );
     CU_add_test( *suite, "Set Response Form", set_res_form );
+    CU_add_test( *suite, "Set Response Form with rspDestination", set_res_form_with_rsp_destination );
+    CU_add_test( *suite, "Set Response Form without rspDestination", set_res_form_without_rsp_destination );
     CU_add_test( *suite, "Set attributes Response Form", set_attr_res_form );
     CU_add_test( *suite, "Test and Set Response Form", test_and_set_res_form );
     CU_add_test( *suite, "Add row Response Form", add_rows_res_form );

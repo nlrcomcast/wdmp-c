@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 - Used specific versions of external dependencies.
+### Added
+- Support for `rspDestination` in SET requests: parsed into `set_req_t.rspDestination` (defaults to `NULL` when absent) and echoed per parameter in the SET response only when non-NULL (`param_res_t.rspDestination`).
+- Method invocation (e.g. `RDK.Operate`) over the existing SET flow: a SET-shaped request whose `value` is a Base64-encoded (`dataType` `WDMP_BASE64`) operate payload, treated as opaque and reusing the SET parse/form path with no new command type.
 
 ## [1.0.0] - 2018-06-19
 ### Added

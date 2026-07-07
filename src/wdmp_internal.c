@@ -163,6 +163,13 @@ void parse_set_request(cJSON *request, req_struct **reqObj, PAYLOAD_TYPE type)
 			WdmpPrint("(*reqObj)->u.setReq->param[%zu].type : %d\n",i,(*reqObj)->u.setReq->param[i].type);
 		}
 	}
+
+	if (cJSON_GetObjectItem(request, "rspDestination") != NULL &&
+		cJSON_GetObjectItem(request, "rspDestination")->valuestring != NULL)
+	{
+		(*reqObj)->u.setReq->rspDestination = strdup(cJSON_GetObjectItem(request, "rspDestination")->valuestring);
+		WdmpPrint("(*reqObj)->u.setReq->rspDestination : %s\n",(*reqObj)->u.setReq->rspDestination);
+	}
 			
 }
 
@@ -562,6 +569,12 @@ void wdmp_form_get_response(res_struct *resObj, cJSON *response)
                         WdmpPrint("resObj->retStatus[%zu] : %d\n",i,resObj->retStatus[i]);
                         mapWdmpStatusToStatusMessage(resObj->retStatus[i], result);
                         cJSON_AddStringToObject(resParamObj, "message", result);
+
+                        if(resObj->u.paramRes->rspDestination != NULL)
+                        {
+                                WdmpPrint("resObj->u.paramRes->rspDestination : %s\n",resObj->u.paramRes->rspDestination);
+                                cJSON_AddStringToObject(resParamObj, "rspDestination", resObj->u.paramRes->rspDestination);
+                        }
                 }
                 
         }

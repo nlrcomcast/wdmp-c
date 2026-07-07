@@ -115,6 +115,7 @@ typedef struct
 {	
     param_t *param;
     size_t paramCnt;
+    char *rspDestination;
 } set_req_t;
 
 typedef struct
@@ -177,6 +178,7 @@ typedef struct
     char *syncCMC;
     char *syncCID;
     param_t *params;
+    char *rspDestination;
 } param_res_t;
 
 typedef struct

@@ -259,6 +259,10 @@ void wdmp_free_req_struct( req_struct *reqObj )
                     }
                     free(reqObj->u.setReq->param);
                 }
+                if(reqObj->u.setReq->rspDestination)
+                {
+                    free(reqObj->u.setReq->rspDestination);
+                }
                 free(reqObj->u.setReq);
             }
         }
@@ -399,6 +403,10 @@ void wdmp_free_res_struct( res_struct *resObj )
                                 if(resObj->u.paramRes->syncCID)
                                 {
                                         free(resObj->u.paramRes->syncCID);
+                                }
+                                if(resObj->u.paramRes->rspDestination)
+                                {
+                                        free(resObj->u.paramRes->rspDestination);
                                 }
                                 free(resObj->u.paramRes);
                         }
